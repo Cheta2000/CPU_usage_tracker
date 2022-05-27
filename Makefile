@@ -8,8 +8,15 @@ TDIR := ./test
 SRC := $(wildcard $(SDIR)/*.c)
 ASRC := $(SRC) $(wildcard $(ADIR)/*.c)
 TSRC := $(SRC) $(wildcard $(TDIR)/*.c)
+
+AOBJ := $(ASRC:%.c=%.o)
+TOBJ := $(TSRC:%.c=%.o)
+OBJ := $(AOBJ) $(TOBJ) 
+
 EXEC := main.out
 TEST := test.out
+
+H_INC := $(foreach d, $(IDIR), -I$d)
 
 CC := gcc
 CC_STD := -std=c99
@@ -29,14 +36,18 @@ CC_FLAGS += $(OPT)
 
 all: $(EXEC)
 
-$(EXEC): $(ASRC)
-	$(CC) $(CC_STD) $(CC_FLAGS) $(ASRC) -o $@ 
+$(EXEC): $(AOBJ)
+	$(CC) $(CC_STD) $(CC_FLAGS) $(AOBJ) -o $@ -lpthread
+
+%.o:%.c
+	$(CC) $(CC_STD) $(CC_FLAGS) $(H_INC) -c $< -o $@
 
 test : $(TEST)
 
-$(TEST): $(TSRC)
-	$(CC) $(CC_STD) $(CC_FLAGS) $(TSRC) -o $@ 
+$(TEST): $(TOBJ)
+	$(CC) $(CC_STD) $(CC_FLAGS) $(TOBJ) -o $@ -lpthread
 
 clean:
 	$(RM) $(EXEC)
+	$(RM) $(OBJ)
 	$(RM) $(TEST)
