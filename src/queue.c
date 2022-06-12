@@ -50,6 +50,24 @@ void queue_destroy(Queue *const q)
     free(q);
 }
 
+bool queue_is_empty(const Queue *q)
+{
+    if (q == NULL)
+    {
+        return true;
+    }
+    return q->size == 0;
+}
+
+bool queue_is_full(const Queue *q)
+{
+    if (q == NULL)
+    {
+        return false;
+    }
+    return q->size == q->max_elements;
+}
+
 int queue_enqueue(Queue *restrict q, const void *const restrict element)
 {
     if (q == NULL || element == NULL)
@@ -57,8 +75,15 @@ int queue_enqueue(Queue *restrict q, const void *const restrict element)
         return -1;
     }
 
-    char *ptr = &q->buffer[q->head * q->element_size];
+    if (queue_is_full(q))
+    {
+        return 1;
+    }
+
+    uint8_t *const ptr = &q->buffer[q->head * q->element_size];
     memcpy(ptr, element, q->element_size);
+
+    q->head++;
     if (q->head >= q->max_elements)
     {
         q->head = 0;
@@ -75,8 +100,14 @@ int queue_dequeue(Queue *restrict q, void *const restrict element)
         return -1;
     }
 
+    if (queue_is_empty(q))
+    {
+        return 1;
+    }
+
     const uint8_t *const ptr = &q->buffer[q->tail * q->element_size];
     memcpy(element, ptr, q->element_size);
+
     q->tail++;
     if (q->tail >= q->max_elements)
     {
@@ -85,5 +116,3 @@ int queue_dequeue(Queue *restrict q, void *const restrict element)
     q->size--;
     return 0;
 }
-
-
