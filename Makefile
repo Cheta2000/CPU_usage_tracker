@@ -37,7 +37,7 @@ CC_FLAGS += $(OPT)
 all: $(EXEC)
 
 $(EXEC): $(AOBJ)
-	$(CC) $(CC_STD) $(CC_FLAGS) $(AOBJ) -o $@ -lpthread
+	$(CC) $(CC_STD) $(CC_FLAGS) $(AOBJ) -o $@ -lpthread -lm
 
 %.o:%.c
 	$(CC) $(CC_STD) $(CC_FLAGS) $(H_INC) -c $< -o $@
@@ -45,7 +45,7 @@ $(EXEC): $(AOBJ)
 test : $(TEST)
 
 $(TEST): $(TOBJ)
-	$(CC) $(CC_STD) $(CC_FLAGS) $(TOBJ) -o $@ -lpthread
+	$(CC) $(CC_STD) $(CC_FLAGS) $(TOBJ) -o $@ -lpthread -lm
 
 clean:
 	$(RM) $(EXEC)
