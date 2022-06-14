@@ -14,6 +14,7 @@ bool queue_is_full(const Queue *q);
 
 int queue_enqueue(Queue *restrict q, const void *restrict element);
 int queue_dequeue(Queue *restrict q, void *restrict element);
+int queue_remove_all(Queue *q);
 
 void queue_lock(Queue *q);
 void queue_unlock(Queue *q);

@@ -6,8 +6,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-// kolejka do przekazywania danych między wątkami (zawiera mutex i cond var)
-// jest generyczna (trzeba podać rozmiar elementu), wykorzystuje FAM
+// generic queue to send data between threads
+// it use mutex, cond var, FAM
 struct Queue
 {
     size_t max_elements;
@@ -129,32 +129,44 @@ int queue_dequeue(Queue *restrict q, void *const restrict element)
     return 0;
 }
 
-void queue_lock(Queue *q)
+int queue_remove_all(Queue *q)
+{
+    if (q == NULL)
+    {
+        return -1;
+    }
+    q->size = 0;
+    q->head = 0;
+    q->tail = 0;
+    return 0;
+}
+
+void queue_lock(Queue *const q)
 {
     pthread_mutex_lock(&q->mutex);
 }
 
-void queue_unlock(Queue *q)
+void queue_unlock(Queue *const q)
 {
     pthread_mutex_unlock(&q->mutex);
 }
 
-void queue_call_producer(Queue *q)
+void queue_call_producer(Queue *const q)
 {
     pthread_cond_signal(&q->can_produce);
 }
 
-void queue_call_consumer(Queue *q)
+void queue_call_consumer(Queue *const q)
 {
     pthread_cond_signal(&q->can_consume);
 }
 
-void queue_wait_for_producer(Queue *q)
+void queue_wait_for_producer(Queue *const q)
 {
     pthread_cond_wait(&q->can_consume, &q->mutex);
 }
 
-void queue_wait_for_consumer(Queue *q)
+void queue_wait_for_consumer(Queue *const q)
 {
     pthread_cond_wait(&q->can_produce, &q->mutex);
 }

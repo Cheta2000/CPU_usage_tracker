@@ -1,12 +1,13 @@
 #include <stddef.h>
 #include <string.h>
+#include <stdio.h>
 
-size_t count_CPU_cores(char usage[])
+size_t CPU_cores_count(char usage[const])
 {
     size_t counter = 0;
     char *line = strtok(usage, "\n");
 
-    while (strstr(line, "cpu") != NULL)
+    while (line != NULL && strstr(line, "cpu") != NULL)
     {
         counter++;
         line = strtok(NULL, "\n");

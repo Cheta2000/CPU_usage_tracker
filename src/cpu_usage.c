@@ -5,42 +5,54 @@
 #include <stdlib.h>
 #include <math.h>
 
-extern size_t count_CPU_cores(char usage[]);
+extern size_t CPU_cores_count(char usage[]);
 
-struct CPU_usage
+struct CPU_data
 {
     size_t no_of_cores;
     CPU_core cores[];
 };
 
-CPU_usage *
-CPU_usage_create(char *usage)
+struct CPU_usage
+{
+    size_t no_of_cores;
+    float core_usage[];
+};
+
+// formating usage data to create struct
+CPU_data *
+CPU_data_create(char usage[])
 {
     char *usage_copy = malloc(strlen(usage) + 1);
-    strncpy(usage_copy, usage, strlen(usage) + 1);
+    memcpy(usage_copy, usage, strlen(usage) + 1);
+    const size_t no_of_cores = CPU_cores_count(usage_copy);
 
-    size_t no_of_cores = count_CPU_cores(usage);
+    CPU_data *data = calloc(1, sizeof(data) + sizeof(CPU_core) * no_of_cores);
+    data->no_of_cores = no_of_cores;
 
-    CPU_usage *cpu_usage = calloc(1, sizeof(cpu_usage) + sizeof(CPU_core) * no_of_cores);
-    cpu_usage->no_of_cores = no_of_cores;
     const size_t params = 8;
-    char *line = strtok(usage, "\n");
+    char *line = strtok(usage_copy, "\n");
+
     for (size_t i = 0; i < no_of_cores; i++)
     {
-        char *lineCopy = malloc(strlen(line) + 1);
-        strncpy(lineCopy, line, strlen(line) + 1);
         size_t core_params[params];
-        char *token = strtok(line, " ");
+
+        char *line_copy = malloc(strlen(line) + 1);
+        strncpy(line_copy, line, strlen(line) + 1);
+        char *token = strtok(line_copy, " ");
         token = strtok(token + strlen(token) + 1, " ");
+
         size_t j = 0;
         while (token != NULL && j < params)
         {
             core_params[j] = atoi(token);
-            token = strtok(token + strlen(token) + 1, " ");
             j++;
+
+            token = strtok(token + strlen(token) + 1, " ");
         }
         line = strtok(line + strlen(line) + 1, "\n");
-        CPU_core cpu_core = (CPU_core){
+
+        const CPU_core core = (CPU_core){
             .user = core_params[0],
             .nice = core_params[1],
             .system = core_params[2],
@@ -50,58 +62,91 @@ CPU_usage_create(char *usage)
             .softirq = core_params[6],
             .steal = core_params[7]};
 
-        memcpy(&cpu_usage->cores[i], &cpu_core, sizeof(CPU_core));
-        free(lineCopy);
+        memcpy(&data->cores[i], &core, sizeof(CPU_core));
+
+        free(line_copy);
     }
 
     free(usage_copy);
 
-    return cpu_usage;
+    return data;
 }
 
-int CPU_usage_destroy(CPU_usage *CPU_usage)
+void CPU_data_destroy(CPU_data *const data)
 {
-    free(CPU_usage);
-    return 1;
-}
-
-// PrevIdle = previdle + previowait
-// Idle = idle + iowait
-
-// PrevNonIdle = prevuser + prevnice + prevsystem + previrq + prevsoftirq + prevsteal
-// NonIdle = user + nice + system + irq + softirq + steal
-
-// PrevTotal = PrevIdle + PrevNonIdle
-// Total = Idle + NonIdle
-
-// # differentiate: actual value minus the previous one
-// totald = Total - PrevTotal
-// idled = Idle - PrevIdle
-
-// CPU_Percentage = (totald - idled)/totald
-float *CPU_usage_calculate(CPU_usage *previous, CPU_usage *current)
-{
-    float *results = malloc(sizeof(float) * previous->no_of_cores);
-    for (size_t i = 0; i < previous->no_of_cores; i++)
+    if (data == NULL)
     {
-        CPU_core previous_core = previous->cores[i];
-        CPU_core current_core = current->cores[i];
+        return;
+    }
 
-        size_t prev_idle = previous_core.idle + previous_core.iowait;
-        size_t idle = current_core.idle + current_core.iowait;
+    free(data);
+}
 
-        size_t prev_nonidle = previous_core.user + previous_core.nice + previous_core.system + previous_core.irq + previous_core.softirq + previous_core.steal;
-        size_t nonidle = current_core.user + current_core.nice + current_core.system + current_core.irq + current_core.softirq + current_core.steal;
+//  formula to count CPU usage
+CPU_usage *CPU_usage_calculate(const CPU_data *const data)
+{
+    if (data == NULL)
+    {
+        return NULL;
+    }
 
-        size_t prev_total = prev_idle + prev_nonidle;
-        size_t total = idle + nonidle;
+    float results[data->no_of_cores];
 
-        size_t totald = total - prev_total;
-        size_t idled = idle - prev_idle;
+    for (size_t i = 0; i < data->no_of_cores; i++)
+    {
+        const CPU_core core = data->cores[i];
 
-        float usage = 100 * (totald - idled) / (float)totald;
-        float rounded = round(100 * usage) / 100;
+        const size_t total = core.user + core.nice + core.system + core.irq + core.softirq + core.steal + core.idle + core.iowait;
+
+        const float usage = 100 * (core.idle) / (float)total;
+        const float rounded = 100 - round(100 * usage) / 100;
         results[i] = rounded;
     }
-    return results;
+
+    CPU_usage *usage = malloc(sizeof(CPU_usage) + sizeof(float) * data->no_of_cores);
+    usage->no_of_cores = data->no_of_cores;
+    memcpy(usage->core_usage, results, sizeof(float) * data->no_of_cores);
+
+    return usage;
+}
+
+void CPU_usage_destroy(CPU_usage *const usage)
+{
+    if (usage == NULL)
+    {
+        return;
+    }
+
+    free(usage);
+}
+
+void CPU_usage_print(const CPU_usage *const usage)
+{
+    if (usage == NULL)
+    {
+        return;
+    }
+
+    printf("\nNEW USAGE DATA\nOVERALL: %.2f%%\n", usage->core_usage[0]);
+    for (size_t i = 1; i < usage->no_of_cores; i++)
+    {
+        printf("CORE %ld: %.2f%%\n", i, usage->core_usage[i]);
+    }
+}
+
+float CPU_usage_get_core_usage(const CPU_usage *const usage, const size_t index)
+{
+    if (usage == NULL)
+    {
+        return 0;
+    }
+
+    if (index < usage->no_of_cores)
+    {
+        return usage->core_usage[index];
+    }
+    else
+    {
+        return 0;
+    }
 }

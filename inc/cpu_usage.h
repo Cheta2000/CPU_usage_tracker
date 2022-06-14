@@ -2,7 +2,7 @@
 #ifndef CPU_H
 #define CPU_H
 
-// potrzebne dane z pliku /proc/stat
+// data from /proc/stat
 typedef struct CPU_core
 {
     size_t user;
@@ -13,14 +13,19 @@ typedef struct CPU_core
     size_t irq;
     size_t softirq;
     size_t steal;
-
 } CPU_core;
 
 typedef struct CPU_usage CPU_usage;
 
-CPU_usage *CPU_usage_create(char usage[]);
-int CPU_usage_destroy(CPU_usage *CPU_usage);
+typedef struct CPU_data CPU_data;
 
-float *CPU_usage_calculate(CPU_usage *previous, CPU_usage *current);
+CPU_data *CPU_data_create(char usage[]);
+void CPU_data_destroy(CPU_data *data);
+
+CPU_usage *CPU_usage_calculate(const CPU_data *data);
+void CPU_usage_destroy(CPU_usage *usage);
+
+void CPU_usage_print(const CPU_usage *usage);
+float CPU_usage_get_core_usage(const CPU_usage *usage, const size_t index);
 
 #endif
