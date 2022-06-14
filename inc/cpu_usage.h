@@ -2,7 +2,7 @@
 #ifndef CPU_H
 #define CPU_H
 
-// data from /proc/stat
+// core info
 typedef struct CPU_core
 {
     size_t user;

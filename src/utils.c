@@ -4,6 +4,11 @@
 
 size_t CPU_cores_count(char usage[const])
 {
+    if (usage == NULL)
+    {
+        return 0;
+    }
+
     size_t counter = 0;
     char *line = strtok(usage, "\n");
 

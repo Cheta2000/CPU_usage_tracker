@@ -11,6 +11,7 @@ static void queue_single_enqueue_test(void);
 static void queue_full_enqueue_test(void);
 static void queue_single_dequeue_test(void);
 static void queue_full_dequeue_test(void);
+static void queue_remove_all_test(void);
 
 static void queue_create_test(void)
 {
@@ -270,6 +271,36 @@ static void queue_full_dequeue_test(void)
     }
 }
 
+static void queue_remove_all_test(void)
+{
+    register const size_t max_elements = 10;
+    register const size_t element_size = sizeof(int);
+
+    Queue *q = queue_create(max_elements, element_size);
+
+    assert(q != NULL);
+
+    assert(queue_is_empty(q));
+    assert(!queue_is_full(q));
+
+    for (size_t i = 0; i < 5; i++)
+    {
+        assert(queue_enqueue(q, &(int){i}) == 0);
+        assert(!queue_is_empty(q));
+        assert(!queue_is_full(q));
+    }
+
+    assert(!queue_is_empty(q));
+    assert(!queue_is_full(q));
+
+    assert(queue_remove_all(q) == 0);
+
+    assert(queue_is_empty(q));
+    assert(!queue_is_full(q));
+
+    queue_destroy(q);
+}
+
 void queue_main_test(void)
 {
     queue_create_test();
@@ -278,4 +309,5 @@ void queue_main_test(void)
     queue_full_enqueue_test();
     queue_single_dequeue_test();
     queue_full_dequeue_test();
+    queue_remove_all_test();
 }

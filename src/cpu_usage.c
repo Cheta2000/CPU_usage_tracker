@@ -7,12 +7,14 @@
 
 extern size_t CPU_cores_count(char usage[]);
 
+// info about all cores
 struct CPU_data
 {
     size_t no_of_cores;
     CPU_core cores[];
 };
 
+// result of cpu usage
 struct CPU_usage
 {
     size_t no_of_cores;
@@ -21,8 +23,13 @@ struct CPU_usage
 
 // formating usage data to create struct
 CPU_data *
-CPU_data_create(char usage[])
+CPU_data_create(char usage[const])
 {
+    if (usage == NULL)
+    {
+        return NULL;
+    }
+
     char *usage_copy = malloc(strlen(usage) + 1);
     memcpy(usage_copy, usage, strlen(usage) + 1);
     const size_t no_of_cores = CPU_cores_count(usage_copy);
