@@ -1,5 +1,8 @@
 #include "queue.h"
 
+#ifndef WRAPPER_H
+#define WRAPPER_h
+
 // each thread needs more then one queue
 typedef struct Queues_Wrapper
 {
@@ -8,3 +11,5 @@ typedef struct Queues_Wrapper
     Queue *queue_logger;
     Queue *queue_watchdog;
 } Queues_Wrapper;
+
+#endif

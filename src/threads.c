@@ -349,7 +349,7 @@ void *thread_watchdog(void *arg)
         sleep(2);
 
         queue_lock(q);
-        if (queue_is_empty(q))
+        if (queue_is_empty(q) && !done)
         {
             printf("ERROR!\n");
             finish_threads();
